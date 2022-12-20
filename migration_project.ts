@@ -1,6 +1,4 @@
-import axios from 'axios';
 import * as _ from 'lodash';
-import * as fs from 'fs';
 import {
     config,
     filePath,
@@ -10,11 +8,8 @@ import {
 import {
     getOldProjects,
     getNewNamespaces,
-    getOldNamespaces,
     createNewProject,
     getNewProjects,
-    createNewProjectInfoLogs,
-    DataSource,
     CommandOptions,
     getParentFullPath,
     writeToLocal,
@@ -149,7 +144,7 @@ async function getCreateProjectsInfo(commandOptions: CommandOptions) {
                 old: oldPro.path_with_namespace,
                 new: newProjectFullPath
             })
-            console.log(`create success: oldPath: ${oldPro.path_with_namespace}, newPath: ${newProjectFullPath}`)
+            console.log(`create project success: oldPath: ${oldPro.path_with_namespace}, newPath: ${newProjectFullPath}`)
         }
     }
     // map 写入本地文件

@@ -1,7 +1,5 @@
-import { group } from 'console';
 import * as _ from 'lodash';
 import {
-    config,
     getNewGroupFullPathByOldGroupFullPath,
 } from './config';
 import {
@@ -9,7 +7,6 @@ import {
     getNewGroups,
     getExistGroupsMap,
     createNewGroup,
-    DataSource,
     CommandOptions,
     getParentFullPath,
     isIgnoreGroup

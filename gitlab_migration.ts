@@ -3,18 +3,7 @@
  * @Author: Jemesl
  * @Date: 2022-12-05 18:44:23
  */
-import axios from 'axios';
-import {
-    verify
-} from 'crypto';
-import * as fs from 'fs';
 import * as _ from 'lodash';
-import {
-    create
-} from 'lodash';
-import {
-    config
-} from './config';
 import {
     deleteActions
 } from './data_delete';
@@ -36,6 +25,9 @@ import {
     migrationRepositories,
     pushToRemote
 } from './migration_repositories';
+import {
+    migrationUser
+} from './migration_user';
 
 async function main() {
     const commandOptions = parseCommondOptions();
@@ -59,6 +51,9 @@ async function migrationActions(commandOptions: CommandOptions) {
         case Migration.all:
             await migrationAll(commandOptions);
             break;
+        case Migration.user:
+            await migrationUser(commandOptions);
+            break;
         case Migration.group:
             await migrationGroup(commandOptions);
             break;
@@ -77,10 +72,14 @@ async function migrationActions(commandOptions: CommandOptions) {
     }
 }
 
-async function migrationAll(commandOptions: CommandOptions){
+async function migrationAll(commandOptions: CommandOptions) {
     if (commandOptions.dataSource == DataSource.local) {
         await downloadGitlabInfo(GitService.new);
         await downloadGitlabInfo(GitService.old);
+    }
+    await migrationUser(commandOptions);
+    if (commandOptions.dataSource == DataSource.local) {
+        await downloadGitlabInfo(GitService.new);
     }
     await migrationGroup(commandOptions);
     if (commandOptions.dataSource == DataSource.local) {
@@ -121,8 +120,11 @@ function parseCommondOptions(): CommandOptions {
                 commandOptions.command = 'migration';
                 params.shift();
                 switch (params[0]) {
-                    case 'all': 
+                    case 'all':
                         commandOptions.migration = Migration.all;
+                        break;
+                    case 'user':
+                        commandOptions.migration = Migration.user;
                         break;
                     case 'group':
                         commandOptions.migration = Migration.group;
@@ -148,6 +150,9 @@ function parseCommondOptions(): CommandOptions {
                 commandOptions.command = 'delete';
                 params.shift();
                 switch (params[0]) {
+                    case 'user':
+                        commandOptions.migration = Migration.user;
+                        break;
                     case 'group':
                         commandOptions.migration = Migration.group;
                         break;
@@ -155,7 +160,7 @@ function parseCommondOptions(): CommandOptions {
                         commandOptions.migration = Migration.project;
                         break;
                     default:
-                        throw Error('[delete] 没有指定值[ group | pro ]');
+                        throw Error('[delete] 没有指定值[ group | pro | user ]');
                 }
                 params.shift();
                 break;

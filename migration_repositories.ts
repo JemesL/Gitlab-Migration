@@ -3,13 +3,8 @@
  * @Author: Jemesl
  * @Date: 2022-12-08 16:07:12
  */
-import axios from 'axios';
 import * as fs from 'fs';
 import * as _ from 'lodash';
-import {
-    create,
-    map
-} from 'lodash';
 import {
     config, filePath
 } from './config';
@@ -18,7 +13,6 @@ import {
     CommandOptions,
     getGitAddrMap,
     getOldProjects,
-    readLocalFile
 } from './data_Interface'
 import {
     simpleGit

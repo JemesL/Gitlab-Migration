@@ -29,7 +29,12 @@ export const config = {
     // 缺省的 group, 指定的是转换后的 namespace
     default_group_full_path: '',
 
-
+    // 需要忽略的 user 的 username
+    ignore_users_username: [
+        'root',
+        'alert-bot',
+        'support-bot'
+    ],
     // 需要忽略的 group 的 full_path(旧 gitlab)
     ignore_groups_full_path: [],
     // 需要忽略的 project 的 full_path(旧 gitlab)
@@ -56,10 +61,12 @@ export const filePath = {
     //  新旧 repo path 映射文件地址
     repositories_map: './data/repositories_map.json',
     
+    old_users: './data/old_users.json',
     old_groups: './data/old_groups.json',
     old_projects: './data/old_projects.json',
     old_namespaces: './data/old_namespaces.json',
 
+    new_users: './data/new_users.json',
     new_groups: './data/new_groups.json',
     new_projects: './data/new_projects.json',
     new_namespaces: './data/new_namespaces.json',

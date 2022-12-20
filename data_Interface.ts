@@ -16,6 +16,7 @@ export enum GitService {
 
 export enum Migration {
     all,
+    user,
     group,
     project,
     repo,
@@ -52,11 +53,31 @@ export let newService = axios.create({
     }
 })
 
+export async function createNewUser(obj: any) {
+    let res = await newService.post('/users', null, {
+        params: obj
+    })
+    return res.data;
+}
+
+export async function deleteNewUser(id: any) {
+    let service = newService;
+    const res = await service.delete(`/users/${id}`);
+    console.log(res.data);
+    return res.data;
+}
 
 export async function createNewProject(obj: any) {
     let res = await newService.post('/projects', null, {
         params: obj
     })
+    return res.data;
+}
+
+export async function deleteNewProject(id: any) {
+    let service = newService;
+    const res = await service.delete(`/projects/${id}`);
+    console.log(res.data);
     return res.data;
 }
 
@@ -74,60 +95,38 @@ export async function deleteNewGroup(id: any) {
     return res.data;
 }
 
-export async function deleteNewProject(id: any) {
-    let service = newService;
-    const res = await service.delete(`/projects/${id}`);
-    console.log(res.data);
-    return res.data;
+export async function pullProjects(type: GitService, path ? : string) {
+    return await pullAPI(type, '/projects', path)
 }
 
-export async function pullProjects(type: GitService, path ? : string) {
-    let service = type == GitService.new ? newService : oldService;
-    const res1 = await service.get('/projects', {
-        params: {
-            per_page: 100,
-            page: 1
-        }
-    });
-    const res2 = await service.get('/projects', {
-        params: {
-            per_page: 100,
-            page: 2
-        }
-    });
-    let list = res1.data.concat(res2.data);
-    if (path) {
-        await writeToLocal(path, list)
-    }
-    return list;
+export async function pullUsers(type: GitService, path ? : string) {
+    return await pullAPI(type, '/users', path)
 }
 
 export async function pullGroups(type: GitService, path ? : string) {
-    let service = type == GitService.new ? newService : oldService;
-    const res = await service.get('/groups', {
-        params: {
-            per_page: 100,
-            page: 1
-        }
-    });
-    const list = res.data.sort(function (a: any, b: any) {
-        return a.id - b.id
-    })
-    if (path) {
-        await writeToLocal(path, list)
-    }
-    return list;
+    return await pullAPI(type, '/groups', path)
 }
 
 export async function pullNamespaces(type: GitService, path ? : string) {
+    return await pullAPI(type, '/namespaces', path)
+}
+
+export async function pullAPI(type: GitService, api: string, path?: string) {
     let service = type == GitService.new ? newService : oldService;
-    const res = await service.get('/namespaces', {
-        params: {
-            per_page: 100,
-            page: 1
-        }
-    });
-    const list = res.data.sort(function (a: any, b: any) {
+    let page = 1;
+    let list: any = [];
+    var next = true;
+    do {
+        const res: any = await service.get(api, {
+            params: {
+                per_page: 100,
+                page: page++
+            }
+        });
+        list = list.concat(res.data);
+        next = res.headers['x-total-pages'] >= page
+    } while (next);
+    list = list.sort(function (a: any, b: any) {
         return a.id - b.id
     })
     if (path) {
@@ -175,15 +174,26 @@ function getParentDir(dirPath: string): any {
 export async function downloadGitlabInfo(service: GitService) {
     console.log('downloadGitlabInfo');
     if (service == GitService.new) {
+        await pullUsers(GitService.new, filePath.new_users);
         await pullGroups(GitService.new, filePath.new_groups);
         await pullProjects(GitService.new, filePath.new_projects);
         await pullNamespaces(GitService.new, filePath.new_namespaces);
     } else {
+        await pullUsers(GitService.old, filePath.old_users);
         await pullGroups(GitService.old, filePath.old_groups);
         await pullProjects(GitService.old, filePath.old_projects);
         await pullNamespaces(GitService.old, filePath.old_namespaces);
     }
     console.log('download success!');
+}
+
+export async function getOldUsers(dataSource: DataSource) {
+    switch (dataSource) {
+        case DataSource.online:
+            return await pullUsers(GitService.old);
+        case DataSource.local:
+            return readLocalFile(filePath.old_users);
+    }
 }
 
 export async function getOldGroups(dataSource: DataSource) {
@@ -210,6 +220,15 @@ export async function getOldNamespaces(dataSource: DataSource) {
             return await pullNamespaces(GitService.old);
         case DataSource.local:
             return readLocalFile(filePath.old_namespaces);
+    }
+}
+
+export async function getNewUsers(dataSource: DataSource) {
+    switch (dataSource) {
+        case DataSource.online:
+            return await pullUsers(GitService.new);
+        case DataSource.local:
+            return readLocalFile(filePath.new_users);
     }
 }
 
@@ -289,6 +308,15 @@ export function isIgnoreProject(projectFullPath: string): Boolean {
 export function isIgnoreGroup(groupFullPath: string): Boolean {
     for (let ignoreGroup of config.ignore_groups_full_path) {
         if (groupFullPath == ignoreGroup) {
+            return true
+        }
+    }
+    return false;
+}
+
+export function isIgnoreUser(username: string): Boolean {
+    for (let ignoreUsername of config.ignore_users_username) {
+        if (ignoreUsername == username) {
             return true
         }
     }
